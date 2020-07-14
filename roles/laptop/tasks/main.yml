@@ -1,0 +1,184 @@
+- name: Create temporary directory
+  file:
+    path: "{{ Home }}/ansible-tmp"
+    state: directory
+    owner: "{{ lookup('env', 'USER') }}"
+
+- name: Upgrade packages
+  apt:
+    update_cache: yes
+    name: "*"
+
+- name: Install common packages
+  apt:
+    update_cache: yes
+    name:
+      - git
+      - curl
+      - wget
+      - ssh
+      - g++
+      - htop
+      - vim
+
+- name: Download Rust installer
+  get_url:
+    url: https://sh.rustup.rs
+    dest: "{{ Home }}/ansible-tmp/rustup-init.sh"
+    mode: 0744
+    owner: "{{ lookup('env', 'USER') }}"
+
+- name: Install Rust
+  shell: "{{ Home }}/ansible-tmp/rustup-init.sh -y"
+
+- name: Download Go
+  get_url:
+    url: "https://golang.org/dl/go{{ go.version }}.{{ os }}-{{ arch }}.tar.gz"
+    dest: "{{ Home }}/ansible-tmp/go{{ go.version }}.{{ os }}-{{ arch }}.tar.gz"
+
+- name: Install Go
+  unarchive:
+    src: "{{ Home }}/ansible-tmp/go{{ go.version }}.{{ os }}-{{ arch }}.tar.gz"
+    dest: /usr/local
+    mode: 0744
+    owner: "{{ lookup('env', 'USER') }}"
+
+- name: Install VirtualBox
+  apt:
+    update_cache: yes
+    name: virtualbox
+    state: latest
+
+- name: Download Terraform
+  get_url:
+    url: "https://releases.hashicorp.com/terraform/{{ terraform.version }}/terraform_{{ terraform.version }}_{{ os }}_{{ arch }}.zip"
+    dest: "{{ Home }}/ansible-tmp/terraform_{{ terraform.version }}_{{ os }}_{{ arch }}.zip"
+
+- name: Install Terraform
+  unarchive:
+    src: "{{ Home }}/ansible-tmp/terraform_{{ terraform.version }}_{{ os }}_{{ arch }}.zip"
+    dest: /usr/local/bin
+    mode: 0744
+    owner: "{{ lookup('env', 'USER') }}"
+
+- name: Download AWS cli
+  get_url:
+    url: "https://awscli.amazonaws.com/awscli-exe-{{ os }}-x86_64.zip"
+    dest: "{{ Home }}/ansible-tmp/awscli-exe-{{ os }}-x86_64.zip"
+
+- name: Install AWS cli
+  unarchive:
+    src: "{{ Home }}/ansible-tmp/awscli-exe-{{ os }}-x86_64.zip"
+    dest: /usr/local/bin
+    mode: 0744
+    owner: "{{ lookup('env', 'USER') }}"
+
+# TODO: install GCP cli
+
+- name: Add Microsoft GPG key
+  shell: "wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | apt-key add -"
+  args:
+    warn: false
+
+- name: Add VSCode repository
+  shell: 'add-apt-repository "deb [arch={{ arch }}] https://packages.microsoft.com/repos/vscode stable main"'
+
+- name: Install VSCode
+  apt:
+    update_cache: yes
+    name: code
+
+- name: Install VLC
+  apt:
+    update_cache: yes
+    name: vlc
+
+- name: Add GIMP repository
+  shell: add-apt-repository ppa:otto-kesselgulasch/gimp
+
+- name: Install GIMP
+  apt:
+    update_cache: yes
+    name: gimp
+
+- name: Install neofetch
+  apt:
+    update_cache: yes
+    name: neofetch
+
+- name: Install firefox
+  apt:
+    update_cache: yes
+    name: firefox
+
+- name: Add Docker GPG key
+  shell: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -"
+  args:
+    warn: false
+
+- name: Add Docker repository
+  shell: 'add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"'
+
+- name: Install Docker
+  apt:
+    update_cache: yes
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+
+- name: Install Kubectl
+  get_url:
+    url: https://storage.googleapis.com/kubernetes-release/release/{{ kubectl.version }}/bin/{{ os }}/{{ arch }}/kubectl
+    dest: /usr/local/bin/kubectl
+    mode: 0744
+    owner: "{{ lookup('env', 'USER') }}"
+
+- name: Install Kind
+  get_url:
+    url: https://kind.sigs.k8s.io/dl/v0.8.1/kind-{{ os }}-{{ arch }}
+    dest: /usr/local/bin/kind
+    mode: 0744
+    owner: "{{ lookup('env', 'USER') }}"
+
+- name: Install Steam
+  apt:
+    update_cache: yes
+    name: steam-installer
+
+- name: Install ZSH
+  apt:
+    update_cache: yes
+    name: zsh
+
+- name: Use ZSH as default shell
+  shell: "chsh -s $(which zsh) $USER"
+
+- name: Download Oh-My-ZSH
+  get_url:
+    url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+    dest: "{{ Home }}/ansible-tmp/oh-my-zsh-install.zsh"
+    mode: 0744
+    owner: "{{ lookup('env', 'USER') }}"
+
+- name: Install Oh-My-ZSH
+  shell: "{{ Home }}/ansible-tmp/oh-my-zsh-install.zsh"
+
+- name: Download Oh-My-VIA theme
+  shell: "git clone https://github.com/badouralix/oh-my-via.git ${ZSH_CUSTOM:-{{ Home }}/.oh-my-zsh/custom}/themes/oh-my-via"
+
+- name: Download ZSH autosuggestions
+  shell: "git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-{{ Home }}/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+
+- name: Download ZSH syntax highlighting
+  shell: "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-{{ Home }}/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+
+- name: Configure ZSH profile
+  template:
+    src: zshrc.j2
+    dest: "{{ Home }}/.zshrc"
+
+- name: Clean temporary directory
+  file:
+    path: "{{ Home }}/ansible-tmp"
+    state: absent

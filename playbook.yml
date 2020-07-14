@@ -1,0 +1,10 @@
+- name: Setup my personal laptop
+  hosts: localhost
+  become: true
+  connection: local
+  roles:
+    - laptop
+  vars_prompt:
+    - name: Home
+      prompt: Path to you HOME directory
+      default: "{{ lookup('env', 'HOME') }}"

@@ -1,0 +1,24 @@
+# ZSH customization
+export ZSH="{{ Home }}/.oh-my-zsh"
+ZSH_THEME="oh-my-via/via"
+plugins=(
+    git
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+)
+
+source $ZSH/oh-my-zsh.sh
+
+# Ubuntu snap
+export PATH="$PATH:/snap/bin"
+
+# Go
+export PATH="$PATH:/usr/local/go/bin"
+export GOPATH="$HOME/dev/go"
+export PATH="$PATH:$GOPATH/bin"
+
+# Custom aliases
+alias up="sudo apt-get update; sudo apt-get upgrade"
+
+# Startup
+neofetch
